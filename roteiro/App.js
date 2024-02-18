@@ -1,15 +1,66 @@
 import { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View , TextInput, Platform, Pressable, ScrollView,ActivityIndicator} from 'react-native';
+import { StyleSheet, Text, View , TextInput, Platform, 
+Pressable, ScrollView,ActivityIndicator, Alert, Keyboard} from 'react-native';
 import Slider from '@react-native-community/slider';
 import {MaterialIcons} from '@expo/vector-icons'
 
 const statusBar = StatusBar.currentHeight
+const KEY_CHATGPT = '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'
+
 
 export default function App() {
-  const [value, setValue] = useState(10) 
-  const [loading, setLoading] = useState(true)
+  const [city, setCity] = useState("")
+  const [days, setDays] = useState(10) 
+  const [loading, setLoading] = useState(false)
   const [travel, setTravel] = useState("")
+
+  const handleGenerate = async ()=>{
+    if(city === ""){
+      Alert.alert("Atenção", "Preencha o nome da cidade!")
+    }
+
+    setLoading(true);
+    Keyboard.dismiss; // fechando o teclado do usuário
+
+    const Prompt = `Crie um roteiro para uma viagem de exatos ${days} dias na cidade de ${city}, busque por lugares turisticos, lugares mais visitados, seja preciso nos dias de estadia fornecidos e limite o roteiro apenas na cidade fornecida. Forneça apenas em tópicos com nome do local onde ir em cada dia.`
+    // pegando e utilizando API do Openai(chatgpt)
+    fetch('https://api.openai.com/v1/chat/completions',{
+      method: "POST",
+      // definindo os cabeçalhos da solicitação HTTP, 
+      headers:{
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${KEY_CHATGPT}`
+      },
+      // convertendo um objeto JavaScript em uma string JSON usando JSON.stringify()
+      body: JSON.stringify({
+        model:"gpt-3.5-turbo-0301",
+        messages: [
+          {
+            role:'user',
+            content: Prompt
+          },
+        ],
+            temperature: 0.20,
+            max_tokens: 500,
+            top_p:1
+      })
+    })
+    // Tranformando o retorno da API em JSON
+    .then(response => response.json())
+    // Pegando o retorno da API
+    .then((data)=>{
+      console.log(data)
+    })
+    // caso de algum erro na API
+    .catch((error)=>{
+      console.log(error)
+    })
+    // chamada a API deu certo
+    .finally(()=>{
+      setLoading(false)
+    })
+  }
 
 
   return (
@@ -22,18 +73,21 @@ export default function App() {
         <TextInput
           placeholder='Ex: Campo Grande, MS'
           style={styles.input}
+          onChangeText={(text)=> setCity(text)}
+          value={city}
         />
-        <Text style={styles.label}>Tempo de estadia: <Text style={styles.days}>{value}</Text> dias</Text>
+        <Text style={styles.label}>Tempo de estadia: <Text style={styles.days}>{days}</Text> dias</Text>
         <Slider
           minimumValue={1}
           maximumValue={31}
           minimumTrackTintColor='#009688'
           maximumTrackTintColor='#000000'
-          onValueChange={(value)=> setValue(value.toFixed(0))}
+          value={days}
+          onValueChange={(value)=> setDays(value.toFixed(0))}
         />
       </View>
 
-      <Pressable style={styles.button}>
+      <Pressable style={styles.button} onPress={handleGenerate}>
         <Text style={styles.buttonText}>Gerar roteiro</Text>
         <MaterialIcons name='travel-explore'  size={24} color='#FFF'/>
       </Pressable>
