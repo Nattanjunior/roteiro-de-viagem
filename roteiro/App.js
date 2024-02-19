@@ -6,7 +6,7 @@ import Slider from '@react-native-community/slider';
 import {MaterialIcons} from '@expo/vector-icons'
 
 const statusBar = StatusBar.currentHeight
-const KEY_CHATGPT = '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'
+const KEY_CHATGPT = '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'
 
 
 export default function App() {
@@ -19,11 +19,11 @@ export default function App() {
     if(city === ""){
       Alert.alert("Atenção", "Preencha o nome da cidade!")
     }
-
+    setTravel("")
     setLoading(true);
     Keyboard.dismiss; // fechando o teclado do usuário
 
-    const Prompt = `Crie um roteiro para uma viagem de exatos ${days} dias na cidade de ${city}, busque por lugares turisticos, lugares mais visitados, seja preciso nos dias de estadia fornecidos e limite o roteiro apenas na cidade fornecida. Forneça apenas em tópicos com nome do local onde ir em cada dia.`
+    const Prompt = `Crie um roteiro para uma viagem de exatos ${days.toFixed(0)} dias na cidade de ${city}, busque por lugares turisticos, lugares mais visitados, seja preciso nos dias de estadia fornecidos e limite o roteiro apenas na cidade fornecida. Forneça apenas em tópicos com nome do local onde ir em cada dia.`
     // pegando e utilizando API do Openai(chatgpt)
     fetch('https://api.openai.com/v1/chat/completions',{
       method: "POST",
@@ -50,7 +50,8 @@ export default function App() {
     .then(response => response.json())
     // Pegando o retorno da API
     .then((data)=>{
-      console.log(data)
+      console.log(data.choices[0].message.content)
+      setTravel(data.choices[0].message.content)
     })
     // caso de algum erro na API
     .catch((error)=>{
